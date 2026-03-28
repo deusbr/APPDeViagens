@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TravelCost — Planeje viagens e controle seus custos com inteligência. O concierge moderno para viajantes.">
+  <title>TravelCost — O Concierge Moderno</title>
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app-shell" id="app">
+
+    <!-- ============================================ -->
+    <!-- TOP APP BAR                                  -->
+    <!-- ============================================ -->
+    <nav class="top-bar" id="topBar">
+      <div class="top-bar__brand">
+        <div class="top-bar__avatar" id="topBarAvatar">
+          <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%230058bc'/><text x='50' y='55' text-anchor='middle' dy='.1em' font-size='40' fill='white' font-family='Inter'>V</text></svg>" alt="Avatar" id="topBarAvatarImg">
+        </div>
+        <span class="top-bar__title">TravelCost</span>
+      </div>
+      <div class="top-bar__nav">
+        <a href="#/home" data-nav="home">Início</a>
+        <a href="#/viagens" data-nav="viagens">Viagens</a>
+        <a href="#/relatorios" data-nav="relatorios">Relatórios</a>
+      </div>
+      <div class="top-bar__actions">
+        <button class="btn-icon" id="btnThemeToggle" title="Alternar tema">
+          <span class="material-symbols-outlined">contrast</span>
+        </button>
+        <button class="btn-icon" title="Notificações">
+          <span class="material-symbols-outlined">notifications</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- MAIN CONTENT AREA                            -->
+    <!-- ============================================ -->
+    <main class="main-content" id="mainContent">
+
+      <!-- ========== SCREEN: LOGIN ========== -->
+      <section class="screen screen-login" id="screen-login">
+        <div class="login-bg-blob login-bg-blob--1"></div>
+        <div class="login-bg-blob login-bg-blob--2"></div>
+        <div style="width:100%;max-width:380px;z-index:10;">
+          <header class="flex-col" style="align-items:center;margin-bottom:3rem;">
+            <div class="login-brand-icon">
+              <span class="material-symbols-outlined text-on-primary" style="font-size:2rem;">work</span>
+            </div>
+            <h1 class="display-md" style="text-align:center;">TravelCost</h1>
+            <p class="text-muted mt-2" style="text-align:center;">O Concierge Moderno</p>
+          </header>
+
+          <div id="loginFormContainer">
+            <form id="loginForm" style="display:flex;flex-direction:column;gap:1.5rem;">
+              <div class="input-group">
+                <label class="input-label">E-mail</label>
+                <input type="email" class="input-field" id="loginEmail" placeholder="nome@empresa.com" required>
+              </div>
+              <div class="input-group">
+                <div class="flex-between">
+                  <label class="input-label">Senha</label>
+                  <a href="#" class="label-sm text-primary" style="font-size:0.625rem;text-decoration:none;">ESQUECEU?</a>
+                </div>
+                <input type="password" class="input-field" id="loginPassword" placeholder="••••••••" required minlength="6">
+              </div>
+              <div id="loginError" class="input-error hidden">
+                <span class="material-symbols-outlined" style="font-size:0.875rem;">error</span>
+                <span id="loginErrorText"></span>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full btn-lg" id="loginBtn">
+                <span id="loginBtnText">Entrar</span>
+                <span class="material-symbols-outlined" style="font-size:1rem;">arrow_forward</span>
+              </button>
+            </form>
+
+            <div class="divider-text" style="margin:1.5rem 0;">
+              <span>ou continue com</span>
+            </div>
+
+            <div class="grid-2" style="gap:1rem;">
+              <button class="social-btn social-btn--google" id="btnGoogleLogin">
+                <span class="material-symbols-outlined" style="font-size:1.25rem;">g_mobiledata</span>
+                <span style="font-size:0.8rem;font-weight:700;">Google</span>
+              </button>
+              <button class="social-btn social-btn--apple">
+                <span class="material-symbols-outlined icon-filled" style="font-size:1.25rem;">phone_iphone</span>
+                <span style="font-size:0.8rem;font-weight:700;">Apple</span>
+              </button>
+            </div>
+          </div>
+
+          <footer style="margin-top:2.5rem;text-align:center;">
+            <p class="body-md text-muted">
+              <span id="loginToggleText">Novo por aqui?</span>
+              <a href="#" class="text-primary font-bold" id="loginToggleBtn" style="margin-left:0.25rem;">Criar Conta</a>
+            </p>
+          </footer>
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: HOME / DASHBOARD ========== -->
+      <section class="screen" id="screen-home">
+        <!-- Hero Stats -->
+        <header class="mb-8">
+          <div style="display:flex;flex-direction:column;gap:1.5rem;">
+            <div>
+              <span class="label-sm text-primary mb-1" style="display:block;">Gasto Mensal</span>
+              <h2 class="display-lg" id="homeMonthlyTotal">R$ 0</h2>
+              <p class="text-muted mt-2" style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="material-symbols-outlined text-secondary" style="font-size:1.25rem;">trending_up</span>
+                <span id="homeTrend">Carregando...</span>
+              </p>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+              <div class="stat-card">
+                <span class="stat-card__label">Total Anual</span>
+                <span class="stat-card__value" id="homeYearlyTotal">R$ 0</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-card__label">Viagens Ativas</span>
+                <span class="stat-card__value" id="homeActiveTrips">0</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Main Trip Card + Insight -->
+        <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;" class="mb-8" id="homeBentoGrid">
+          <!-- Preenchido via JS -->
+        </div>
+
+        <!-- Other Active Trips -->
+        <div class="mb-8" id="homeOtherTrips">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: NOVA VIAGEM ========== -->
+      <section class="screen" id="screen-nova-viagem">
+        <h2 class="headline-lg mb-6">Nova Viagem</h2>
+        <form id="newTripForm" style="display:flex;flex-direction:column;gap:1.5rem;">
+          <div class="input-group">
+            <label class="input-label">Nome da Viagem</label>
+            <input type="text" class="input-field" id="tripName" placeholder="Ex: Férias no Nordeste" required>
+          </div>
+          <div class="grid-2">
+            <div class="input-group">
+              <label class="input-label">Origem</label>
+              <input type="text" class="input-field" id="tripOrigin" placeholder="Cidade de partida" list="citiesListOrigin">
+              <datalist id="citiesListOrigin"></datalist>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Destino</label>
+              <input type="text" class="input-field" id="tripDestination" placeholder="Cidade destino" required list="citiesListDest">
+              <datalist id="citiesListDest"></datalist>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="input-group">
+              <label class="input-label">Data de Ida</label>
+              <input type="date" class="input-field" id="tripStartDate" required>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Data de Volta</label>
+              <input type="date" class="input-field" id="tripEndDate" required>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="input-group">
+              <label class="input-label">Orçamento Total (R$)</label>
+              <input type="number" class="input-field" id="tripBudget" placeholder="5000" min="100" required>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Nº de Pessoas</label>
+              <input type="number" class="input-field" id="tripPeople" placeholder="2" min="1" value="1">
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Descrição (opcional)</label>
+            <input type="text" class="input-field" id="tripDescription" placeholder="Ex: Conferência e turismo">
+          </div>
+
+          <!-- Preview Estimado -->
+          <div class="card-surface" id="tripPreview" style="display:none;">
+            <h4 class="label-sm text-primary mb-4">Preview Estimado</h4>
+            <div class="grid-2" style="gap:0.75rem;" id="tripPreviewContent"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg">
+            <span class="material-symbols-outlined">add_circle</span>
+            Criar Viagem
+          </button>
+        </form>
+      </section>
+
+      <!-- ========== SCREEN: DETALHES DA VIAGEM ========== -->
+      <section class="screen" id="screen-viagem-detalhe">
+        <div id="tripDetailContent">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: GESTÃO DE DESPESAS ========== -->
+      <section class="screen" id="screen-despesas">
+        <div id="expensesContent">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: LISTA DE VIAGENS ========== -->
+      <section class="screen" id="screen-viagens">
+        <div class="flex-between mb-6">
+          <h2 class="headline-lg">Suas Viagens</h2>
+          <a href="#/nova-viagem" class="btn btn-primary" style="font-size:0.8rem;">
+            <span class="material-symbols-outlined" style="font-size:1rem;">add</span> Nova
+          </a>
+        </div>
+        <div class="search-bar mb-6">
+          <span class="material-symbols-outlined text-muted">search</span>
+          <input type="text" id="searchTrips" placeholder="Buscar viagens...">
+        </div>
+        <div class="filter-bar mb-6">
+          <button class="chip-filter active" data-filter="all">Todas</button>
+          <button class="chip-filter" data-filter="active">Em Andamento</button>
+          <button class="chip-filter" data-filter="planning">Planejando</button>
+          <button class="chip-filter" data-filter="completed">Concluídas</button>
+          <button class="chip-filter" data-filter="over">Acima</button>
+        </div>
+        <div id="tripsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: RELATÓRIOS ========== -->
+      <section class="screen" id="screen-relatorios">
+        <div id="reportsContent">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: PERFIL ========== -->
+      <section class="screen" id="screen-perfil">
+        <div id="profileContent">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- ========== SCREEN: OFFLINE ========== -->
+      <section class="screen" id="screen-offline">
+        <div class="offline-screen">
+          <div class="offline-icon">
+            <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--outline);">wifi_off</span>
+          </div>
+          <h2 class="headline-lg mb-2">Sem Conexão</h2>
+          <p class="text-muted body-md mb-6" style="max-width:320px;">Você está offline. Seus dados locais ainda estão disponíveis para visualização.</p>
+          <button class="btn btn-secondary" onclick="location.reload()">
+            <span class="material-symbols-outlined">refresh</span>
+            Tentar Novamente
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ============================================ -->
+    <!-- BOTTOM NAV BAR (Mobile)                      -->
+    <!-- ============================================ -->
+    <nav class="bottom-nav" id="bottomNav">
+      <a href="#/home" class="bottom-nav__item" data-nav="home">
+        <span class="material-symbols-outlined">home</span>
+        <span>Início</span>
+      </a>
+      <a href="#/nova-viagem" class="bottom-nav__item" data-nav="nova-viagem">
+        <span class="material-symbols-outlined">add_circle</span>
+        <span>Nova</span>
+      </a>
+      <a href="#/viagens" class="bottom-nav__item" data-nav="viagens">
+        <span class="material-symbols-outlined">explore</span>
+        <span>Viagens</span>
+      </a>
+      <a href="#/relatorios" class="bottom-nav__item" data-nav="relatorios">
+        <span class="material-symbols-outlined">insert_chart</span>
+        <span>Relatórios</span>
+      </a>
+      <a href="#/perfil" class="bottom-nav__item" data-nav="perfil">
+        <span class="material-symbols-outlined">person</span>
+        <span>Perfil</span>
+      </a>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- FAB (Context-Aware)                          -->
+    <!-- ============================================ -->
+    <button class="fab hidden" id="mainFab">
+      <span class="material-symbols-outlined">add</span>
+      <span id="fabLabel">Nova Viagem</span>
+    </button>
+
+    <!-- ============================================ -->
+    <!-- MODAL: ADD EXPENSE                           -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="modalExpense">
+      <div class="modal">
+        <div class="modal__header">
+          <h3 class="modal__title">Adicionar Despesa</h3>
+          <button class="btn-icon" onclick="closeModal('modalExpense')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <form id="expenseForm" style="display:flex;flex-direction:column;gap:1.25rem;">
+          <input type="hidden" id="expTripId">
+          <input type="hidden" id="expEditId">
+          <div class="input-group">
+            <label class="input-label">Categoria</label>
+            <select class="input-field" id="expCategory" required>
+              <option value="">Selecione...</option>
+              <option value="flight">✈️ Passagens</option>
+              <option value="hotel">🏨 Hospedagem</option>
+              <option value="food">🍽️ Alimentação</option>
+              <option value="car">🚗 Carro</option>
+              <option value="gas">⛽ Gasolina</option>
+              <option value="transport">🚌 Transporte</option>
+              <option value="extras">🎫 Extras</option>
+            </select>
+          </div>
+          <div class="grid-2">
+            <div class="input-group">
+              <label class="input-label">Valor (R$)</label>
+              <input type="number" class="input-field" id="expAmount" placeholder="0,00" step="0.01" min="0.01" required>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Data</label>
+              <input type="date" class="input-field" id="expDate" required>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Descrição</label>
+            <input type="text" class="input-field" id="expDescription" placeholder="Ex: Restaurante Madero - Jantar">
+          </div>
+          <!-- Real-time total preview -->
+          <div class="card-surface" id="expensePreview">
+            <div class="flex-between">
+              <span class="label-sm text-muted">Total atualizado:</span>
+              <span class="title-md font-bold text-primary" id="expensePreviewTotal">R$ 0</span>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">
+            <span class="material-symbols-outlined">check</span>
+            <span id="expSubmitText">Adicionar</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: CONFIRM DELETE                        -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="modalConfirm">
+      <div class="modal" style="max-width:360px;text-align:center;">
+        <div style="margin-bottom:1.5rem;">
+          <span class="material-symbols-outlined" style="font-size:3rem;color:var(--error);">delete_forever</span>
+        </div>
+        <h3 class="title-lg mb-2" id="confirmTitle">Confirmar Exclusão</h3>
+        <p class="body-md text-muted mb-6" id="confirmText">Esta ação não pode ser desfeita.</p>
+        <div style="display:flex;gap:1rem;">
+          <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('modalConfirm')">Cancelar</button>
+          <button class="btn btn-danger" style="flex:1;" id="confirmBtn">Excluir</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: SHARE / QR CODE                       -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="modalShare">
+      <div class="modal" style="max-width:380px;text-align:center;">
+        <div class="modal__header">
+          <h3 class="modal__title">Compartilhar Viagem</h3>
+          <button class="btn-icon" onclick="closeModal('modalShare')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="input-group mb-4">
+          <label class="input-label">Link de Visualização</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" class="input-field" id="shareLink" readonly style="flex:1;">
+            <button class="btn btn-secondary" id="copyLinkBtn" onclick="copyShareLink()">
+              <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
+            </button>
+          </div>
+        </div>
+        <div class="qr-container mb-4" id="qrCodeContainer">
+          <canvas id="qrCanvas" width="180" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TOAST CONTAINER                              -->
+    <!-- ============================================ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ============================================ -->
+    <!-- WELCOME OVERLAY                              -->
+    <!-- ============================================ -->
+    <div class="welcome-overlay" id="welcomeOverlay">
+      <div class="welcome-card">
+        <div class="welcome-avatar">
+          <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%230058bc'/><text x='50' y='55' text-anchor='middle' dy='.1em' font-size='40' fill='white' font-family='Inter'>V</text></svg>" alt="Avatar" id="welcomeAvatarImg">
+          <div class="welcome-avatar__badge">
+            <span class="material-symbols-outlined icon-filled" style="font-size:0.75rem;">check_circle</span>
+          </div>
+        </div>
+        <h2 class="title-lg mb-2">Bem-vindo de volta!</h2>
+        <p class="body-sm text-muted mb-6" id="welcomeText">Suas viagens estão prontas para revisão.</p>
+        <button class="btn btn-primary btn-full" id="welcomeBtn" style="background:var(--on-surface);color:var(--surface);">Vamos lá</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="data.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
