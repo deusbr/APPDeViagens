@@ -1,0 +1,1 @@
+# APPDeViagens\n\nTravelCost — App de planejamento e controle de custos de viagens.\n\n## Tecnologias\n- HTML, CSS, JavaScript (Vanilla SPA)\n- Supabase (backend opcional)\n- Chart.js, Leaflet.js\n- Material Symbols\n\n## Como usar\nAbra o `index.html` no navegador.\n
